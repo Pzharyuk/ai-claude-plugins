@@ -1,0 +1,67 @@
+{
+  "name": "ai-claude-plugins",
+  "owner": {
+    "name": "Pzharyuk",
+    "email": "pzharyuk@gmail.com"
+  },
+  "metadata": {
+    "description": "Self-hosted infrastructure management plugins for Cloudflare, Proxmox, Home Assistant, and UniFi OS.",
+    "pluginRoot": "."
+  },
+  "plugins": [
+    {
+      "name": "cloudflare-extended",
+      "source": "./cloudflare-extended",
+      "description": "Manage Cloudflare DNS records, Tunnels, zones, and cache purge.",
+      "version": "0.1.0",
+      "author": { "name": "Pzharyuk" },
+      "repository": "https://github.com/Pzharyuk/ai-claude-plugins",
+      "keywords": ["cloudflare", "dns", "tunnels", "infrastructure"]
+    },
+    {
+      "name": "proxmox-manager",
+      "source": "./proxmox-manager",
+      "description": "Full Proxmox VE management — VMs, snapshots, storage, and Kubernetes cluster provisioning.",
+      "version": "0.1.0",
+      "author": { "name": "Pzharyuk" },
+      "repository": "https://github.com/Pzharyuk/ai-claude-plugins",
+      "keywords": ["proxmox", "virtualization", "kubernetes", "vms", "infrastructure"]
+    },
+    {
+      "name": "homeassistant-manager",
+      "source": "./homeassistant-manager",
+      "description": "Full Home Assistant management — devices, automations, scenes, scripts, and notifications.",
+      "version": "0.1.0",
+      "author": { "name": "Pzharyuk" },
+      "repository": "https://github.com/Pzharyuk/ai-claude-plugins",
+      "keywords": ["home-assistant", "smart-home", "automations", "iot"]
+    },
+    {
+      "name": "unifi-network",
+      "source": "./unifi-network",
+      "description": "Manage UniFi network devices, clients, WiFi SSIDs, VLANs, port forwarding, and firewall rules.",
+      "version": "0.1.0",
+      "author": { "name": "Pzharyuk" },
+      "repository": "https://github.com/Pzharyuk/ai-claude-plugins",
+      "keywords": ["unifi", "network", "wifi", "ubiquiti", "infrastructure"]
+    },
+    {
+      "name": "unifi-protect",
+      "source": "./unifi-protect",
+      "description": "Manage UniFi Protect cameras, motion events, smart detection, recordings, and snapshots.",
+      "version": "0.1.0",
+      "author": { "name": "Pzharyuk" },
+      "repository": "https://github.com/Pzharyuk/ai-claude-plugins",
+      "keywords": ["unifi", "protect", "cameras", "security", "nvr", "ubiquiti"]
+    },
+    {
+      "name": "unifi-access",
+      "source": "./unifi-access",
+      "description": "Manage UniFi Access doors, users, door groups, PIN/NFC credentials, and activity logs.",
+      "version": "0.1.0",
+      "author": { "name": "Pzharyuk" },
+      "repository": "https://github.com/Pzharyuk/ai-claude-plugins",
+      "keywords": ["unifi", "access", "doors", "credentials", "ubiquiti"]
+    }
+  ]
+}

@@ -15,32 +15,53 @@ A collection of Claude Cowork plugins for self-hosted infrastructure management.
 
 ## Installation
 
-### 1. Download the `.plugin` file
+### Option A — Marketplace (recommended)
 
-Each plugin has a pre-built `.plugin` file in its directory (it's a zip archive). Download it from GitHub or build from source (see below).
+This repo is a plugin marketplace. Add it once and install any plugin from it directly in Claude Code or Cowork.
 
-### 2. Install in Claude Cowork
+**1. Add the marketplace**
 
-1. Open the **Plugins** panel — click the puzzle piece icon in the Cowork sidebar
-2. Click **Install from file** and select the downloaded `.plugin` file
-3. Enter the required environment variables when prompted
-   - Each plugin's `README.md` lists all the env vars you need
-4. The plugin activates immediately — no restart needed
+In Claude Code or Cowork, run:
 
-### 3. Install server dependencies (first run only)
+```
+/plugin marketplace add Pzharyuk/ai-claude-plugins
+```
 
-After installing, open a terminal and run:
+**2. Install a plugin**
+
+```
+/plugin install cloudflare-extended@ai-claude-plugins
+/plugin install proxmox-manager@ai-claude-plugins
+/plugin install homeassistant-manager@ai-claude-plugins
+/plugin install unifi-network@ai-claude-plugins
+/plugin install unifi-protect@ai-claude-plugins
+/plugin install unifi-access@ai-claude-plugins
+```
+
+**3. Install server dependencies (first run only)**
+
+Each plugin runs a local Node.js MCP server. After installing, run:
 
 ```bash
 cd <plugin-install-path>/server
 npm install
 ```
 
-> **Requires Node.js.** If not installed, download from [nodejs.org](https://nodejs.org).
+> **Requires Node.js.** Download from [nodejs.org](https://nodejs.org) if needed.
 
-## Building a Plugin from Source
+**4. Set environment variables**
 
-Clone this repo, then for any plugin:
+Each plugin needs credentials set in the Cowork plugin settings panel. See the individual plugin READMEs for the full list of required env vars.
+
+---
+
+### Option B — Install from file
+
+Download the `.plugin` file directly from the plugin's directory in this repo, then install it via the Cowork plugins panel using **Install from file**.
+
+---
+
+### Option C — Build from source
 
 ```bash
 git clone https://github.com/Pzharyuk/ai-claude-plugins.git
