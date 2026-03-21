@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "unifi-protect": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/index.js"],
+      "env": {
+        "UNIFI_HOST": "${UNIFI_HOST}",
+        "UNIFI_USERNAME": "${UNIFI_USERNAME}",
+        "UNIFI_PASSWORD": "${UNIFI_PASSWORD}",
+        "UNIFI_VERIFY_SSL": "${UNIFI_VERIFY_SSL}"
+      }
+    }
+  }
+}

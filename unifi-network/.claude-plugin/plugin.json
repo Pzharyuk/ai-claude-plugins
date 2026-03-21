@@ -1,0 +1,39 @@
+{
+  "name": "unifi-network",
+  "version": "0.1.0",
+  "description": "Manage your UniFi network — devices, clients, WiFi SSIDs, VLANs, firewall rules, port forwarding, and guest vouchers.",
+  "author": "Pzharyuk",
+  "skills": [
+    "skills/network-management"
+  ],
+  "env": [
+    {
+      "name": "UNIFI_HOST",
+      "description": "Your UniFi controller URL, e.g. https://192.168.1.1",
+      "required": true
+    },
+    {
+      "name": "UNIFI_USERNAME",
+      "description": "Admin username",
+      "required": true
+    },
+    {
+      "name": "UNIFI_PASSWORD",
+      "description": "Admin password",
+      "required": true,
+      "secret": true
+    },
+    {
+      "name": "UNIFI_SITE",
+      "description": "Site name (default: default)",
+      "required": false,
+      "default": "default"
+    },
+    {
+      "name": "UNIFI_VERIFY_SSL",
+      "description": "Set to true to enforce SSL certificate validation (default: false)",
+      "required": false,
+      "default": "false"
+    }
+  ]
+}
