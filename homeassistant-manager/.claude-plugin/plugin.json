@@ -1,0 +1,10 @@
+{
+  "name": "homeassistant-manager",
+  "version": "0.1.0",
+  "description": "Full Home Assistant management — device control, automations, scenes, scripts, history, and notifications",
+  "author": {
+    "name": "Paul Zharyuk",
+    "url": "https://github.com/Pzharyuk/ai-claude-plugins"
+  },
+  "keywords": ["homeassistant", "home-automation", "smart-home", "iot", "devices", "automations"]
+}

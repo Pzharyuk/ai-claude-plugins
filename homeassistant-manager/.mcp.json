@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "homeassistant-manager": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/index.js"],
+      "env": {
+        "HA_URL": "${HA_URL}",
+        "HA_TOKEN": "${HA_TOKEN}"
+      }
+    }
+  }
+}
