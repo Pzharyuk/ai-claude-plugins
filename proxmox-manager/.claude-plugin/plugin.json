@@ -1,0 +1,10 @@
+{
+  "name": "proxmox-manager",
+  "version": "0.1.0",
+  "description": "Full Proxmox VE management — VMs, containers, snapshots, storage, and Kubernetes cluster provisioning",
+  "author": {
+    "name": "Paul Zharyuk",
+    "url": "https://github.com/Pzharyuk/ai-claude-plugins"
+  },
+  "keywords": ["proxmox", "virtualization", "kubernetes", "homelab", "infrastructure"]
+}

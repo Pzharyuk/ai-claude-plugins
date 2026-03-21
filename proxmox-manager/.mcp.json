@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "proxmox-manager": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/index.js"],
+      "env": {
+        "PROXMOX_HOST": "${PROXMOX_HOST}",
+        "PROXMOX_TOKEN_ID": "${PROXMOX_TOKEN_ID}",
+        "PROXMOX_TOKEN_SECRET": "${PROXMOX_TOKEN_SECRET}",
+        "PROXMOX_NODE": "${PROXMOX_NODE}",
+        "PROXMOX_VERIFY_SSL": "${PROXMOX_VERIFY_SSL}"
+      }
+    }
+  }
+}
