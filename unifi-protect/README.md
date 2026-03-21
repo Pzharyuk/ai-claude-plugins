@@ -43,27 +43,40 @@ Part of [ai-claude-plugins](https://github.com/Pzharyuk/ai-claude-plugins).
 - `protect_list_liveviews` — Configured liveview layouts
 - `protect_set_viewer_liveview` — Change what a monitor shows
 
-## Setup
+## Installation
 
-### 1. Set Environment Variables
+### 1. Download the plugin
+
+Grab `unifi-protect.plugin` from this repo, or build it yourself:
 
 ```bash
-export UNIFI_HOST="https://192.168.1.1"
-export UNIFI_USERNAME="admin"
-export UNIFI_PASSWORD="your-password"
-export UNIFI_VERIFY_SSL="false"     # optional, set "true" for valid SSL certs
+git clone https://github.com/Pzharyuk/ai-claude-plugins.git
+cd ai-claude-plugins/unifi-protect
+npm install --prefix server
+zip -r ../unifi-protect.plugin . -x "*/node_modules/*"
 ```
 
-### 2. Install the Plugin
+### 2. Install in Claude Cowork
 
-Install `unifi-protect.plugin` via the Cowork plugins interface.
+1. Open the **Plugins** panel (puzzle piece icon in the sidebar)
+2. Click **Install from file** → select `unifi-protect.plugin`
+3. Enter your environment variables when prompted:
 
-### 3. Install Server Dependencies
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `UNIFI_HOST` | ✅ | Controller URL, e.g. `https://192.168.1.1` |
+| `UNIFI_USERNAME` | ✅ | Admin username |
+| `UNIFI_PASSWORD` | ✅ | Admin password |
+| `UNIFI_VERIFY_SSL` | optional | `true` to enforce SSL validation (default: `false`) |
+
+### 3. Install server dependencies (first run only)
 
 ```bash
 cd <plugin-install-path>/server
 npm install
 ```
+
+> **Requires Node.js.** Download from [nodejs.org](https://nodejs.org) if needed.
 
 ## Usage Examples
 
