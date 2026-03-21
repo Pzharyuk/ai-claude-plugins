@@ -2,32 +2,8 @@
   "name": "unifi-access",
   "version": "0.1.0",
   "description": "Manage UniFi Access — doors, users, door groups, PIN/NFC credentials, activity logs, and access schedules.",
-  "author": "Pzharyuk",
-  "skills": [
-    "skills/access-control"
-  ],
-  "env": [
-    {
-      "name": "UNIFI_HOST",
-      "description": "Your UniFi controller URL, e.g. https://192.168.1.1",
-      "required": true
-    },
-    {
-      "name": "UNIFI_USERNAME",
-      "description": "Admin username",
-      "required": true
-    },
-    {
-      "name": "UNIFI_PASSWORD",
-      "description": "Admin password",
-      "required": true,
-      "secret": true
-    },
-    {
-      "name": "UNIFI_VERIFY_SSL",
-      "description": "Set to true to enforce SSL certificate validation (default: false)",
-      "required": false,
-      "default": "false"
-    }
-  ]
+  "author": {
+    "name": "Pzharyuk"
+  },
+  "keywords": ["unifi", "access", "doors", "credentials", "ubiquiti"]
 }

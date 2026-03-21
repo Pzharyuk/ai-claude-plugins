@@ -2,32 +2,8 @@
   "name": "unifi-protect",
   "version": "0.1.0",
   "description": "Manage UniFi Protect — cameras, motion events, smart detections, recordings, snapshots, viewers, and NVR status.",
-  "author": "Pzharyuk",
-  "skills": [
-    "skills/camera-management"
-  ],
-  "env": [
-    {
-      "name": "UNIFI_HOST",
-      "description": "Your UniFi controller URL, e.g. https://192.168.1.1",
-      "required": true
-    },
-    {
-      "name": "UNIFI_USERNAME",
-      "description": "Admin username",
-      "required": true
-    },
-    {
-      "name": "UNIFI_PASSWORD",
-      "description": "Admin password",
-      "required": true,
-      "secret": true
-    },
-    {
-      "name": "UNIFI_VERIFY_SSL",
-      "description": "Set to true to enforce SSL certificate validation (default: false)",
-      "required": false,
-      "default": "false"
-    }
-  ]
+  "author": {
+    "name": "Pzharyuk"
+  },
+  "keywords": ["unifi", "protect", "cameras", "security", "nvr", "ubiquiti"]
 }
