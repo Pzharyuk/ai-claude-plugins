@@ -1,6 +1,6 @@
 {
   "name": "cloudflare-extended",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Full Cloudflare management — DNS records, Tunnels, zones, and cache purging via the Cloudflare REST API",
   "author": {
     "name": "Paul Zharyuk"
