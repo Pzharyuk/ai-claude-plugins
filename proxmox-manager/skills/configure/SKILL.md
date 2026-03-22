@@ -1,45 +1,64 @@
 # Configure: proxmox-manager
 
-Collect the user's Proxmox VE credentials and write them to the plugin env file so the MCP server can authenticate.
+Walk the user through setting up Proxmox VE credentials and persist them to `~/.mcp.json` so the MCP server can authenticate on every Claude Code launch.
 
 ## Steps
 
-1. **Ask for the Proxmox Host**
-   - Prompt: "What is the hostname or IP address of your Proxmox server? (e.g. 192.168.1.100 or pve.local)"
-   - Store as `PROXMOX_HOST`
+### 1. Ask for the Proxmox Host
+Say: "What is the hostname or IP address of your Proxmox server? (e.g. 192.168.1.100 or pve.local)"
 
-2. **Ask for the API Token ID**
-   - Prompt: "What is your Proxmox API Token ID? It should be in the format user@realm!tokenname (e.g. root@pam!claude). You can create one in Proxmox under Datacenter → Permissions → API Tokens."
-   - Store as `PROXMOX_TOKEN_ID`
+Store as `PROXMOX_HOST`.
 
-3. **Ask for the API Token Secret**
-   - Prompt: "Please paste your Proxmox API Token Secret (shown once when you created the token)."
-   - Store as `PROXMOX_TOKEN_SECRET`
+### 2. Ask for the API Token ID
+Say: "What is your Proxmox API Token ID? Format: user@realm!tokenname (e.g. root@pam!claude). Create one in Proxmox under Datacenter → Permissions → API Tokens."
 
-4. **Ask for the Node Name**
-   - Prompt: "What is the name of your Proxmox node? (e.g. pve, node1 — visible in the Proxmox web UI sidebar)"
-   - Store as `PROXMOX_NODE`
+Store as `PROXMOX_TOKEN_ID`.
 
-5. **Ask about SSL verification**
-   - Prompt: "Should SSL certificates be verified? Most homelabs use self-signed certs, so this is usually false. Enter true or false."
-   - Default to `false` if the user is unsure
-   - Store as `PROXMOX_VERIFY_SSL`
+### 3. Ask for the API Token Secret
+Say: "Please paste your Proxmox API Token Secret — this was shown once when you created the token."
 
-6. **Write the env file**
-   - Write all values to `~/.claude/mcp-env/proxmox-manager/.env`:
-     ```
-     PROXMOX_HOST=<value>
-     PROXMOX_TOKEN_ID=<value>
-     PROXMOX_TOKEN_SECRET=<value>
-     PROXMOX_NODE=<value>
-     PROXMOX_VERIFY_SSL=<value>
-     ```
-   - Create the directory if it doesn't exist: `mkdir -p ~/.claude/mcp-env/proxmox-manager`
+Store as `PROXMOX_TOKEN_SECRET`.
 
-7. **Confirm success**
-   - Tell the user: "Proxmox credentials saved. Please restart Claude Code (or run `/reload-plugins`) for the changes to take effect."
+### 4. Ask for the Node Name
+Say: "What is your Proxmox node name? (e.g. pve, node1 — visible in the Proxmox web UI sidebar)"
+
+Store as `PROXMOX_NODE`.
+
+### 5. Ask about SSL verification
+Say: "Should SSL certificates be verified? Most homelabs use self-signed certs. Enter true or false (default: false)."
+
+Default to `false` if unsure. Store as `PROXMOX_VERIFY_SSL`.
+
+### 6. Write to ~/.mcp.json
+Use Python to read `~/.mcp.json` (create if missing), set the env vars under the `proxmox-manager` server, and write it back:
+
+```python
+import json, os
+
+path = os.path.expanduser("~/.mcp.json")
+config = {}
+if os.path.exists(path):
+    with open(path) as f:
+        config = json.load(f)
+
+config.setdefault("mcpServers", {}).setdefault("proxmox-manager", {}).setdefault("env", {}).update({
+    "PROXMOX_HOST": "<value from step 1>",
+    "PROXMOX_TOKEN_ID": "<value from step 2>",
+    "PROXMOX_TOKEN_SECRET": "<value from step 3>",
+    "PROXMOX_NODE": "<value from step 4>",
+    "PROXMOX_VERIFY_SSL": "<value from step 5>"
+})
+
+with open(path, "w") as f:
+    json.dump(config, f, indent=2)
+
+print("Saved.")
+```
+
+### 7. Confirm and prompt reload
+Say: "Proxmox credentials saved to ~/.mcp.json. Run `/reload-plugins` to apply them."
 
 ## Notes
-
-- Never echo the token secret back to the user after saving it.
-- If the file already exists, overwrite it completely with the new values.
+- Never echo the token secret back after saving.
+- Overwrite existing values if the keys already exist.
+- If `~/.mcp.json` is missing, create it with the full structure.

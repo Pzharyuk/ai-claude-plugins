@@ -1,30 +1,46 @@
 # Configure: cloudflare-extended
 
-Collect the user's Cloudflare credentials and write them to the plugin env file so the MCP server can authenticate.
+Walk the user through setting up Cloudflare credentials and persist them to `~/.mcp.json` so the MCP server can authenticate on every Claude Code launch.
 
 ## Steps
 
-1. **Ask for the API Token**
-   - Prompt: "Please paste your Cloudflare API Token. You can create one at https://dash.cloudflare.com/profile/api-tokens — make sure it has Zone Read and DNS Edit permissions."
-   - Store as `CLOUDFLARE_API_TOKEN`
+### 1. Ask for the API Token
+Say: "Please paste your Cloudflare API Token. You can create one at https://dash.cloudflare.com/profile/api-tokens with these permissions: Zone DNS (Edit), Zone (Read), Cache Purge (Purge), Cloudflare Tunnel (Edit), Account Settings (Read)."
 
-2. **Ask for the Account ID**
-   - Prompt: "Now please paste your Cloudflare Account ID. You can find it on the right sidebar of your Cloudflare dashboard homepage."
-   - Store as `CLOUDFLARE_ACCOUNT_ID`
+Store the value as `CLOUDFLARE_API_TOKEN`.
 
-3. **Write the env file**
-   - Write both values to `~/.claude/mcp-env/cloudflare-extended/.env`:
-     ```
-     CLOUDFLARE_API_TOKEN=<value>
-     CLOUDFLARE_ACCOUNT_ID=<value>
-     ```
-   - Create the directory if it doesn't exist: `mkdir -p ~/.claude/mcp-env/cloudflare-extended`
+### 2. Ask for the Account ID
+Say: "Now please paste your Cloudflare Account ID. You can find it on the right sidebar of your Cloudflare dashboard homepage."
 
-4. **Confirm success**
-   - Tell the user: "Cloudflare credentials saved. Please restart Claude Code (or run `/reload-plugins`) for the changes to take effect."
+Store the value as `CLOUDFLARE_ACCOUNT_ID`.
+
+### 3. Write to ~/.mcp.json
+Use Python to read `~/.mcp.json` (create it if missing), set the env vars under the `cloudflare-extended` server, and write it back:
+
+```python
+import json, os
+
+path = os.path.expanduser("~/.mcp.json")
+config = {}
+if os.path.exists(path):
+    with open(path) as f:
+        config = json.load(f)
+
+config.setdefault("mcpServers", {}).setdefault("cloudflare-extended", {}).setdefault("env", {}).update({
+    "CLOUDFLARE_API_TOKEN": "<value from step 1>",
+    "CLOUDFLARE_ACCOUNT_ID": "<value from step 2>"
+})
+
+with open(path, "w") as f:
+    json.dump(config, f, indent=2)
+
+print("Saved.")
+```
+
+### 4. Confirm and prompt reload
+Say: "Cloudflare credentials saved to ~/.mcp.json. Run `/reload-plugins` to apply them."
 
 ## Notes
-
-- Never echo the API token back to the user after saving it.
-- If the file already exists, overwrite it completely with the new values.
-- The env file is read by Claude Code at startup and injected into the MCP server process.
+- Never echo the API token back after saving.
+- Overwrite existing values if the key already exists.
+- If `~/.mcp.json` is missing, create it with the full structure.
