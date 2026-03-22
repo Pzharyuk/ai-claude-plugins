@@ -1,11 +1,17 @@
 {
   "name": "unifi-access",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Manage UniFi Access — doors, users, door groups, PIN/NFC credentials, activity logs, and access schedules.",
   "author": {
     "name": "Pzharyuk"
   },
-  "keywords": ["unifi", "access", "doors", "credentials", "ubiquiti"],
+  "keywords": [
+    "unifi",
+    "access",
+    "doors",
+    "credentials",
+    "ubiquiti"
+  ],
   "setup": {
     "env": {
       "UNIFI_HOST": {

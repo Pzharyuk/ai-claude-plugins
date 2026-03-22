@@ -1,0 +1,75 @@
+name: Auto Release on Push
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    # Skip if this commit was made by the release bot itself
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Read current version
+        id: version
+        run: |
+          CURRENT=$(jq -r '.version' cloudflare-extended/.claude-plugin/plugin.json)
+          IFS='.' read -ra PARTS <<< "$CURRENT"
+          PATCH=$(( ${PARTS[2]} + 1 ))
+          NEW="${PARTS[0]}.${PARTS[1]}.$PATCH"
+          echo "current=$CURRENT" >> $GITHUB_OUTPUT
+          echo "new=$NEW" >> $GITHUB_OUTPUT
+          echo "tag=v$NEW" >> $GITHUB_OUTPUT
+
+      - name: Bump all plugin versions
+        run: |
+          NEW=${{ steps.version.outputs.new }}
+          for plugin in cloudflare-extended proxmox-manager homeassistant-manager unifi-network unifi-access unifi-protect; do
+            FILE="$plugin/.claude-plugin/plugin.json"
+            jq --arg v "$NEW" '.version = $v' "$FILE" > plugin_tmp.json && mv plugin_tmp.json "$FILE"
+            echo "Bumped $plugin → $NEW"
+          done
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add '*/.claude-plugin/plugin.json'
+          git commit -m "chore: bump all plugins to v${{ steps.version.outputs.new }} [skip ci]"
+          git push
+
+      - name: Tag and create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=${{ steps.version.outputs.tag }}
+          git tag $TAG
+          git push origin $TAG
+          gh release create $TAG \
+            --title "Release $TAG" \
+            --notes "$(cat <<'EOF'
+          ## What changed
+          Auto-release triggered by push to main.
+
+          ## Plugins updated
+          - cloudflare-extended
+          - proxmox-manager
+          - homeassistant-manager
+          - unifi-network
+          - unifi-access
+          - unifi-protect
+
+          ## How to update
+          Run `/plugin update --all` in Claude Code, then `/reload-plugins`.
+          EOF
+          )" \
+            --latest

@@ -1,11 +1,16 @@
 {
   "name": "cloudflare-extended",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Full Cloudflare management — DNS records, Tunnels, zones, and cache purging via the Cloudflare REST API",
   "author": {
     "name": "Paul Zharyuk"
   },
-  "keywords": ["cloudflare", "dns", "tunnels", "infrastructure"],
+  "keywords": [
+    "cloudflare",
+    "dns",
+    "tunnels",
+    "infrastructure"
+  ],
   "setup": {
     "env": {
       "CLOUDFLARE_API_TOKEN": {
