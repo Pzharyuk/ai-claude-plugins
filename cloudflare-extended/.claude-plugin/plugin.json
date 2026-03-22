@@ -5,5 +5,18 @@
   "author": {
     "name": "Paul Zharyuk"
   },
-  "keywords": ["cloudflare", "dns", "tunnels", "infrastructure"]
+  "keywords": ["cloudflare", "dns", "tunnels", "infrastructure"],
+  "setup": {
+    "env": {
+      "CLOUDFLARE_API_TOKEN": {
+        "description": "Your Cloudflare API token — create one at https://dash.cloudflare.com/profile/api-tokens with Zone and DNS permissions",
+        "required": true,
+        "secret": true
+      },
+      "CLOUDFLARE_ACCOUNT_ID": {
+        "description": "Your Cloudflare Account ID — found on the right sidebar of your Cloudflare dashboard homepage",
+        "required": true
+      }
+    }
+  }
 }

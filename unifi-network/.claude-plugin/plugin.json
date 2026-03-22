@@ -5,5 +5,32 @@
   "author": {
     "name": "Pzharyuk"
   },
-  "keywords": ["unifi", "network", "wifi", "ubiquiti", "infrastructure"]
+  "keywords": ["unifi", "network", "wifi", "ubiquiti", "infrastructure"],
+  "setup": {
+    "env": {
+      "UNIFI_HOST": {
+        "description": "Hostname or IP of your UniFi Network controller (e.g. https://192.168.1.1 or https://unifi.local)",
+        "required": true
+      },
+      "UNIFI_USERNAME": {
+        "description": "UniFi controller admin username",
+        "required": true
+      },
+      "UNIFI_PASSWORD": {
+        "description": "UniFi controller admin password",
+        "required": true,
+        "secret": true
+      },
+      "UNIFI_SITE": {
+        "description": "UniFi site ID to manage — use 'default' if you only have one site",
+        "required": true,
+        "default": "default"
+      },
+      "UNIFI_VERIFY_SSL": {
+        "description": "Whether to verify SSL certificates. Set to false for self-signed certs (typical in homelabs)",
+        "required": false,
+        "default": "false"
+      }
+    }
+  }
 }

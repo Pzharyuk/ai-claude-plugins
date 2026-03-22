@@ -6,5 +6,18 @@
     "name": "Paul Zharyuk",
     "url": "https://github.com/Pzharyuk/ai-claude-plugins"
   },
-  "keywords": ["homeassistant", "home-automation", "smart-home", "iot", "devices", "automations"]
+  "keywords": ["homeassistant", "home-automation", "smart-home", "iot", "devices", "automations"],
+  "setup": {
+    "env": {
+      "HA_URL": {
+        "description": "URL of your Home Assistant instance (e.g. http://homeassistant.local:8123 or https://ha.yourdomain.com)",
+        "required": true
+      },
+      "HA_TOKEN": {
+        "description": "Long-lived access token — create one in Home Assistant under Profile → Long-Lived Access Tokens",
+        "required": true,
+        "secret": true
+      }
+    }
+  }
 }

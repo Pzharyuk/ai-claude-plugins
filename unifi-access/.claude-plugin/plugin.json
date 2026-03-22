@@ -5,5 +5,27 @@
   "author": {
     "name": "Pzharyuk"
   },
-  "keywords": ["unifi", "access", "doors", "credentials", "ubiquiti"]
+  "keywords": ["unifi", "access", "doors", "credentials", "ubiquiti"],
+  "setup": {
+    "env": {
+      "UNIFI_HOST": {
+        "description": "Hostname or IP of your UniFi Access controller (e.g. https://192.168.1.1 or https://unifi.local)",
+        "required": true
+      },
+      "UNIFI_USERNAME": {
+        "description": "UniFi Access controller admin username",
+        "required": true
+      },
+      "UNIFI_PASSWORD": {
+        "description": "UniFi Access controller admin password",
+        "required": true,
+        "secret": true
+      },
+      "UNIFI_VERIFY_SSL": {
+        "description": "Whether to verify SSL certificates. Set to false for self-signed certs (typical in homelabs)",
+        "required": false,
+        "default": "false"
+      }
+    }
+  }
 }

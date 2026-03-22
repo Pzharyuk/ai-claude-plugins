@@ -6,5 +6,31 @@
     "name": "Paul Zharyuk",
     "url": "https://github.com/Pzharyuk/ai-claude-plugins"
   },
-  "keywords": ["proxmox", "virtualization", "kubernetes", "homelab", "infrastructure"]
+  "keywords": ["proxmox", "virtualization", "kubernetes", "homelab", "infrastructure"],
+  "setup": {
+    "env": {
+      "PROXMOX_HOST": {
+        "description": "Hostname or IP of your Proxmox VE server (e.g. 192.168.1.100 or pve.local)",
+        "required": true
+      },
+      "PROXMOX_TOKEN_ID": {
+        "description": "Proxmox API token ID in the format user@realm!tokenname (e.g. root@pam!claude)",
+        "required": true
+      },
+      "PROXMOX_TOKEN_SECRET": {
+        "description": "Proxmox API token secret — generated when you created the token in Datacenter → Permissions → API Tokens",
+        "required": true,
+        "secret": true
+      },
+      "PROXMOX_NODE": {
+        "description": "Name of the Proxmox node to manage (e.g. pve, node1) — visible in the Proxmox web UI sidebar",
+        "required": true
+      },
+      "PROXMOX_VERIFY_SSL": {
+        "description": "Whether to verify SSL certificates. Set to false for self-signed certs (typical in homelabs)",
+        "required": false,
+        "default": "false"
+      }
+    }
+  }
 }
