@@ -1,6 +1,6 @@
 {
   "name": "homeassistant-manager",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Full Home Assistant management — device control, automations, scenes, scripts, history, and notifications",
   "author": {
     "name": "Paul Zharyuk",
