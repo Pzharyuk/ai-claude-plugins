@@ -1,0 +1,34 @@
+{
+  "name": "hashicorp-vault",
+  "version": "0.2.2",
+  "description": "Full HashiCorp Vault management — KV secrets, PKI certificates, Transit encryption, auth methods, policies, and tokens via the Vault HTTP API",
+  "author": {
+    "name": "Paul Zharyuk"
+  },
+  "keywords": [
+    "vault",
+    "hashicorp",
+    "secrets",
+    "pki",
+    "encryption",
+    "infrastructure"
+  ],
+  "setup": {
+    "env": {
+      "VAULT_ADDR": {
+        "description": "Your Vault server address (e.g. https://vault.example.com:8200)",
+        "required": true
+      },
+      "VAULT_TOKEN": {
+        "description": "Your Vault authentication token — generate one with 'vault token create' or use the root token for initial setup",
+        "required": true,
+        "secret": true
+      },
+      "VAULT_VERIFY_SSL": {
+        "description": "Set to 'true' to verify SSL certificates (default: false for self-signed certs)",
+        "required": false,
+        "default": "false"
+      }
+    }
+  }
+}

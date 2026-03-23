@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "hashicorp-vault": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/index.js"],
+      "env": {
+        "VAULT_ADDR": "${VAULT_ADDR}",
+        "VAULT_TOKEN": "${VAULT_TOKEN}",
+        "VAULT_VERIFY_SSL": "${VAULT_VERIFY_SSL}"
+      }
+    }
+  }
+}

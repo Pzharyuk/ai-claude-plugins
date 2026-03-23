@@ -1,0 +1,35 @@
+{
+  "name": "truenas-manager",
+  "version": "0.2.2",
+  "description": "Full TrueNAS management — storage pools, datasets, snapshots, SMB/NFS/iSCSI shares, services, VMs, apps, and users via the TrueNAS REST API",
+  "author": {
+    "name": "Paul Zharyuk"
+  },
+  "keywords": [
+    "truenas",
+    "storage",
+    "nas",
+    "zfs",
+    "smb",
+    "nfs",
+    "infrastructure"
+  ],
+  "setup": {
+    "env": {
+      "TRUENAS_URL": {
+        "description": "Your TrueNAS server URL (e.g. https://truenas.local)",
+        "required": true
+      },
+      "TRUENAS_API_KEY": {
+        "description": "Your TrueNAS API key — generate one at TrueNAS UI → top-right user menu → API Keys",
+        "required": true,
+        "secret": true
+      },
+      "TRUENAS_VERIFY_SSL": {
+        "description": "Set to 'true' to verify SSL certificates (default: false for self-signed certs)",
+        "required": false,
+        "default": "false"
+      }
+    }
+  }
+}

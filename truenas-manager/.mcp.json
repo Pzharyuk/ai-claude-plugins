@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "truenas-manager": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/index.js"],
+      "env": {
+        "TRUENAS_URL": "${TRUENAS_URL}",
+        "TRUENAS_API_KEY": "${TRUENAS_API_KEY}",
+        "TRUENAS_VERIFY_SSL": "${TRUENAS_VERIFY_SSL}"
+      }
+    }
+  }
+}
