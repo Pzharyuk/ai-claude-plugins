@@ -1,6 +1,6 @@
 {
   "name": "unifi-access",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Manage UniFi Access — doors, users, door groups, PIN/NFC credentials, activity logs, and access schedules.",
   "author": {
     "name": "Pzharyuk"
