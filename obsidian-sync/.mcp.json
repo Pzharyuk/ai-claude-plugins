@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "obsidian-sync": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/index.js"],
+      "env": {
+        "OBSIDIAN_VAULT_PATH": "${OBSIDIAN_VAULT_PATH}",
+        "PROJECTS_DIR": "${PROJECTS_DIR}",
+        "OBSIDIAN_PROJECTS_FOLDER": "${OBSIDIAN_PROJECTS_FOLDER}"
+      }
+    }
+  }
+}

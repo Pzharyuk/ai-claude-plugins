@@ -1,0 +1,16 @@
+{
+  "name": "obsidian-sync-server",
+  "version": "1.0.0",
+  "description": "MCP server for Obsidian vault project sync",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [],
+  "author": "Paul Zharyuk",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1"
+  },
+  "type": "module"
+}

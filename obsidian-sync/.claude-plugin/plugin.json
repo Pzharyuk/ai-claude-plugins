@@ -1,0 +1,32 @@
+{
+  "name": "obsidian-sync",
+  "version": "0.1.0",
+  "description": "Automatic Obsidian vault sync for git projects — tracks git status, commits, PRs, issues, TODOs, architecture, and session logs as living Markdown notes",
+  "author": {
+    "name": "Paul Zharyuk"
+  },
+  "keywords": [
+    "obsidian",
+    "sync",
+    "git",
+    "second-brain",
+    "knowledge-management"
+  ],
+  "setup": {
+    "env": {
+      "OBSIDIAN_VAULT_PATH": {
+        "description": "Absolute path to your Obsidian vault (e.g. ~/Documents/Obsidian/SecondBrain)",
+        "required": true
+      },
+      "PROJECTS_DIR": {
+        "description": "Absolute path to the directory containing your git repositories (e.g. ~/Documents/Claude/Projects)",
+        "required": true
+      },
+      "OBSIDIAN_PROJECTS_FOLDER": {
+        "description": "Folder name within the vault where project notes are stored (default: Projects)",
+        "required": false,
+        "default": "Projects"
+      }
+    }
+  }
+}
