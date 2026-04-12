@@ -1,6 +1,6 @@
 {
   "name": "unifi-network",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Manage your UniFi network — devices, clients, WiFi SSIDs, VLANs, firewall rules, port forwarding, and guest vouchers.",
   "author": {
     "name": "Pzharyuk"
