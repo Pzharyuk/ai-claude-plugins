@@ -73,3 +73,11 @@ jobs:
           EOF
           )" \
             --latest
+
+  notify:
+    needs: [release]
+    if: always()
+    uses: Pzharyuk/.github/.github/workflows/notify-telegram.yml@main
+    with:
+      status: ${{ contains(needs.*.result, 'failure') && 'failure' || (contains(needs.*.result, 'cancelled') && 'cancelled' || 'success') }}
+    secrets: inherit
