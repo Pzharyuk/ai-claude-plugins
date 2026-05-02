@@ -1,6 +1,6 @@
 {
   "name": "unifi-protect",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Manage UniFi Protect — cameras, motion events, smart detections, recordings, snapshots, viewers, and NVR status.",
   "author": {
     "name": "Pzharyuk"
