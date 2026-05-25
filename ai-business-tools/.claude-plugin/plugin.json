@@ -1,0 +1,28 @@
+{
+  "name": "ai-business-tools",
+  "version": "0.1.0",
+  "description": "Connect Claude Code to your ai-business-tools workspace — invoices, clients, projects, expenses, estimates, transactions, and more, all through the workspace's MCP server.",
+  "author": {
+    "name": "Paul Zharyuk"
+  },
+  "keywords": [
+    "business",
+    "invoicing",
+    "freelance",
+    "expenses",
+    "crm",
+    "mcp"
+  ],
+  "setup": {
+    "env": {
+      "AIBT_URL": {
+        "description": "Base URL of your ai-business-tools deployment (e.g. https://agent.onit.systems). No trailing slash.",
+        "required": true
+      },
+      "AIBT_API_KEY": {
+        "description": "API key generated at /admin#mcp-keys. Format: aibt_<role>_<random>. The key's role (read/write/admin) determines which tools you can call.",
+        "required": true
+      }
+    }
+  }
+}
