@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "ai-business-tools": {
+      "type": "http",
+      "url": "${AIBT_URL}/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${AIBT_API_KEY}"
+      }
+    }
+  }
+}

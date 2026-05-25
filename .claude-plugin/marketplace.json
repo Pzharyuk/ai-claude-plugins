@@ -89,6 +89,15 @@
       "author": { "name": "Pzharyuk" },
       "repository": "https://github.com/Pzharyuk/ai-claude-plugins",
       "keywords": ["obsidian", "sync", "git", "second-brain", "knowledge-management"]
+    },
+    {
+      "name": "ai-business-tools",
+      "source": "./ai-business-tools",
+      "description": "Connect Claude Code to your ai-business-tools workspace — invoicing, clients, projects, expenses, estimates, bank transactions, Gmail, Stripe, tax, and more via its MCP server.",
+      "version": "0.1.0",
+      "author": { "name": "Pzharyuk" },
+      "repository": "https://github.com/Pzharyuk/ai-claude-plugins",
+      "keywords": ["business", "invoicing", "freelance", "expenses", "crm", "mcp"]
     }
   ]
 }
