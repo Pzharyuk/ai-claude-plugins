@@ -19,11 +19,13 @@ When installing you'll be prompted for two env vars:
 | Variable | What |
 |---|---|
 | `AIBT_URL` | Base URL of your deployment, e.g. `https://agent.onit.systems`. No trailing slash. |
-| `AIBT_API_KEY` | API key from the workspace. Generate one at `<AIBT_URL>/admin#mcp-keys`. |
+| `AIBT_API_KEY` | API key from the workspace. Generate one at `<AIBT_URL>/admin#api`. |
+
+Full API reference (REST + MCP, with examples) is public at **`<AIBT_URL>/docs`**.
 
 ## Generating an API key
 
-1. Open your workspace and go to **Settings → MCP Keys** (or `<AIBT_URL>/admin#mcp-keys`).
+1. Open your workspace and go to **Settings → API** (or `<AIBT_URL>/admin#api`).
 2. Click **Create Key**, pick a role:
    - **read** — list/get only (clients, invoices, transactions, balances)
    - **write** — read + create/update (most day-to-day work)
@@ -42,13 +44,13 @@ the API key in the `Authorization` header.
 
 ## Revoking a key
 
-Visit the MCP Keys tab and click **Revoke** next to the key. The key is
+Visit the **API** tab and click **Revoke** next to the key. The key is
 soft-deleted via `revokedAt` and rejected on the next call.
 
 ## Troubleshooting
 
 - **401 Unauthorized** — key was revoked or you're pointing at the wrong
-  `AIBT_URL`. Check `/admin#mcp-keys` shows the key as not revoked.
+  `AIBT_URL`. Check `/admin#api` shows the key as not revoked.
 - **Tool missing** — the tool's plugin is disabled for your workspace. Enable
   it under **Settings → Plugins**, or call `enable_plugin` if your key has the
   `admin` role.
