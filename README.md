@@ -12,6 +12,7 @@ A collection of Claude Cowork plugins for self-hosted infrastructure management.
 | [unifi-network](./unifi-network) | Devices, clients, WiFi, VLANs, port forwarding, firewall | 22 |
 | [unifi-protect](./unifi-protect) | Cameras, events, smart detection, recordings, snapshots | 12 |
 | [unifi-access](./unifi-access) | Doors, users, groups, PIN/NFC credentials, activity logs | 21 |
+| [harness-memory](./harness-memory) | Shared agent memory via HTTP MCP (recall, save, wiki, inbox) | 9 |
 
 ## Installation
 
@@ -36,6 +37,7 @@ In Claude Code or Cowork, run:
 /plugin install unifi-network@ai-claude-plugins
 /plugin install unifi-protect@ai-claude-plugins
 /plugin install unifi-access@ai-claude-plugins
+/plugin install harness-memory@ai-claude-plugins
 ```
 
 **3. Install server dependencies (first run only)**

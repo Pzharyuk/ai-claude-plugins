@@ -5,7 +5,7 @@
     "email": "pzharyuk@gmail.com"
   },
   "metadata": {
-    "description": "Self-hosted infrastructure management plugins for Cloudflare, Proxmox, Home Assistant, UniFi OS, HashiCorp Vault, and TrueNAS.",
+    "description": "Self-hosted infrastructure management plugins for Cloudflare, Proxmox, Home Assistant, UniFi OS, HashiCorp Vault, TrueNAS, and shared agent memory.",
     "pluginRoot": "."
   },
   "plugins": [
@@ -98,6 +98,15 @@
       "author": { "name": "Pzharyuk" },
       "repository": "https://github.com/Pzharyuk/ai-claude-plugins",
       "keywords": ["business", "invoicing", "freelance", "expenses", "crm", "mcp"]
+    },
+    {
+      "name": "harness-memory",
+      "source": "./harness-memory",
+      "description": "Shared agent memory via HTTP MCP — recall, save facts, wiki pages, and inbox against a running memoryd. No local Node server.",
+      "version": "0.1.0",
+      "author": { "name": "Pzharyuk" },
+      "repository": "https://github.com/Pzharyuk/ai-claude-plugins",
+      "keywords": ["memory", "mcp", "wiki", "knowledge", "shared-memory"]
     }
   ]
 }

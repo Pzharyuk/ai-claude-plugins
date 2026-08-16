@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "harness-memory": {
+      "type": "http",
+      "url": "${MEMORY_URL}/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MEMORY_TOKEN}"
+      }
+    }
+  }
+}

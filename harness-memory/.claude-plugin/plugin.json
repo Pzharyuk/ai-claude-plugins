@@ -1,0 +1,29 @@
+{
+  "name": "harness-memory",
+  "version": "0.1.0",
+  "description": "Shared agent memory via HTTP MCP — recall, save facts, wiki pages, and inbox against a running memoryd. No local Node server.",
+  "author": {
+    "name": "Paul Zharyuk"
+  },
+  "keywords": [
+    "memory",
+    "mcp",
+    "wiki",
+    "knowledge",
+    "shared-memory"
+  ],
+  "setup": {
+    "env": {
+      "MEMORY_URL": {
+        "description": "Base URL of memoryd (no trailing slash). Local brew default is http://127.0.0.1:8741; set this for compose/helm/remote.",
+        "required": false,
+        "default": "http://127.0.0.1:8741"
+      },
+      "MEMORY_TOKEN": {
+        "description": "Per-harness token from `memory token create --harness claude` (or grok). Do not use the admin token.",
+        "required": true,
+        "secret": true
+      }
+    }
+  }
+}
