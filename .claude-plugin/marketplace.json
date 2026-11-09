@@ -5,7 +5,7 @@
     "email": "pzharyuk@gmail.com"
   },
   "metadata": {
-    "description": "Self-hosted infrastructure management plugins for Cloudflare, Proxmox, Home Assistant, UniFi OS, HashiCorp Vault, TrueNAS, and shared agent memory.",
+    "description": "Self-hosted infrastructure management plugins for Cloudflare, Proxmox, Home Assistant, UniFi OS, UniFi Site Manager, HashiCorp Vault, TrueNAS, and shared agent memory.",
     "pluginRoot": "."
   },
   "plugins": [
@@ -62,6 +62,15 @@
       "author": { "name": "Pzharyuk" },
       "repository": "https://github.com/Pzharyuk/ai-claude-plugins",
       "keywords": ["unifi", "access", "doors", "credentials", "ubiquiti"]
+    },
+    {
+      "name": "unifi-site-manager",
+      "source": "./unifi-site-manager",
+      "description": "Read-only UniFi Site Manager cloud access for every location: hosts, sites, devices, health, WAN metrics, SD-WAN, and Network VPN status via api.ui.com.",
+      "version": "0.1.0",
+      "author": { "name": "Pzharyuk" },
+      "repository": "https://github.com/Pzharyuk/ai-claude-plugins",
+      "keywords": ["unifi", "site-manager", "ubiquiti", "sd-wan", "vpn", "read-only"]
     },
     {
       "name": "hashicorp-vault",

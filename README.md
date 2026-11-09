@@ -10,6 +10,7 @@ A collection of Claude Cowork plugins for self-hosted infrastructure management.
 | [proxmox-manager](./proxmox-manager) | VMs, snapshots, storage, Kubernetes provisioning | 22 |
 | [homeassistant-manager](./homeassistant-manager) | Devices, automations, scenes, scripts, notifications | 30 |
 | [unifi-network](./unifi-network) | Devices, clients, WiFi, VLANs, port forwarding, firewall | 22 |
+| [unifi-site-manager](./unifi-site-manager) | Read-only Site Manager cloud: all locations, health, WAN metrics, SD-WAN, VPN status | 13 |
 | [unifi-protect](./unifi-protect) | Cameras, events, smart detection, recordings, snapshots | 12 |
 | [unifi-access](./unifi-access) | Doors, users, groups, PIN/NFC credentials, activity logs | 21 |
 | [harness-memory](./harness-memory) | Shared agent memory via HTTP MCP (recall, save, wiki, inbox) | 9 |
@@ -35,6 +36,7 @@ In Claude Code or Cowork, run:
 /plugin install proxmox-manager@ai-claude-plugins
 /plugin install homeassistant-manager@ai-claude-plugins
 /plugin install unifi-network@ai-claude-plugins
+/plugin install unifi-site-manager@ai-claude-plugins
 /plugin install unifi-protect@ai-claude-plugins
 /plugin install unifi-access@ai-claude-plugins
 /plugin install harness-memory@ai-claude-plugins
