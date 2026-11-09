@@ -4,7 +4,9 @@ Bind the UniFi Site Manager cloud API key for this plugin. This is not the `unif
 
 ## Do not collect the key
 
-Do not paste the API key into chat. Do not ask the user to paste it. If a key shows up in the transcript, tell the user to revoke it at unifi.ui.com and create a new one. Do not repeat the key, do not write it into `~/.mcp.json`, and do not put it in a file in the repository.
+Do not paste the API key into chat. Do not ask the user to paste it. If a key shows up in the transcript, tell the user to revoke it at unifi.ui.com and create a new one. Do not repeat the key, do not write it into `~/.mcp.json`, and do not put it in a file in the repository. Do not `cat` a key file. Do not pass the key as a command argument.
+
+For a custom MCP host that cannot store the key, Network Engineer stages an owner-only file from the shell that already holds the masked variable and registers `UNIFI_SITE_MANAGER_API_KEY_FILE` as a literal absolute path. The recipe is in the plugin README. Do not run that recipe from a shell that would echo the value, and do not invent a `${UNIFI_SITE_MANAGER_API_KEY}` entry in an AddMcpServer env map. That map is literal. It does not expand shell variables and it does not prompt.
 
 The sanctioned binding in this marketplace is:
 

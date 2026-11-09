@@ -56,9 +56,20 @@ These are official capabilities. They need a separate review before any tool is 
 
 Do not paste the API key into chat. If a key appears in the transcript, revoke it at unifi.ui.com and create another one. This repository never stores a key.
 
+The process reads the key once at startup and keeps it in memory. It is sent only as `X-API-KEY` to `https://api.ui.com`. Redirects are not followed. Proxy environment variables are cleared before any request, because this runtime does not send the key to an HTTP proxy.
+
+Set exactly one of these. If both are set, the process exits. It does not prefer one of them.
+
+| Variable | What it is |
+| --- | --- |
+| `UNIFI_SITE_MANAGER_API_KEY` | The key itself. Use this for the Claude/Cowork plugin secret field. |
+| `UNIFI_SITE_MANAGER_API_KEY_FILE` | An absolute path to a regular file that contains only the key. Not a secret. Use this for a custom MCP registration that cannot hold the key. |
+
+### Plugin install
+
 1. In the UniFi Site Manager UI at [unifi.ui.com](https://unifi.ui.com), create an API key. Official docs: "Generate keys at unifi.ui.com". That cloud key is not the local Network integration key under UniFi Network > Integrations, and it is not `UNIFI_USERNAME` / `UNIFI_PASSWORD` from `unifi-network`.
 2. Install the plugin from this marketplace (commands below) after this change is merged. The install prompt has one secret field, `UNIFI_SITE_MANAGER_API_KEY` (`secret: true` in the plugin manifest).
-3. Enter the key in that secret field yourself. `.mcp.json` only references `${UNIFI_SITE_MANAGER_API_KEY}`. The plugin host substitutes the secret. Do not write the key into `~/.mcp.json`, a skill file, or the repository.
+3. Enter the key in that secret field yourself. `.mcp.json` only references `${UNIFI_SITE_MANAGER_API_KEY}`. That placeholder is for the plugin host, not for a raw MCP env map. Do not write the key into `~/.mcp.json`, a skill file, or the repository. Leave `UNIFI_SITE_MANAGER_API_KEY_FILE` unset.
 4. Install the local server dependencies once:
 
 ```bash
@@ -77,6 +88,51 @@ node -e 'console.log(process.env.UNIFI_SITE_MANAGER_API_KEY ? "set" : "missing")
 ```
 
 Do not print the value. An agent shell often cannot see the plugin secret, so a `missing` result there does not mean the plugin field is empty.
+
+### Custom MCP registration (key file)
+
+`AddMcpServer` accepts a literal env map. It has no documented secret reference and it does not prompt for this API key. Do not put `${UNIFI_SITE_MANAGER_API_KEY}` in that map: the child would receive those characters, not a key. Do not assume the child inherits the bot shell environment.
+
+The bridge below is sound only when the registered env map is what the child actually receives. If a launcher also injects `UNIFI_SITE_MANAGER_API_KEY` from the parent shell, startup refuses with a conflict and this bridge will not run. That is intentional. There is no host automation in this repo that unsets inherited variables for you.
+
+Staging is done by Network Engineer in the shell where the masked secret request already stored the key under the name `UNIFI_SITE_MANAGER_API_KEY`. The recipe reads that process environment. It does not put the key in argv, and it writes no stdout.
+
+```bash
+python3 - << 'PY'
+import os, stat
+from pathlib import Path
+key = os.environ.get("UNIFI_SITE_MANAGER_API_KEY")
+if not isinstance(key, str) or len(key) < 16 or len(key) > 512 or any(ch.isspace() for ch in key) or "\0" in key:
+    raise SystemExit(1)
+path = Path("/home/box/unifi-site-manager-api-key")
+path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+try:
+    os.write(fd, key.encode("utf-8"))
+    os.fchmod(fd, 0o600)
+    st = os.fstat(fd)
+    if stat.S_IMODE(st.st_mode) != 0o600 or st.st_uid != os.getuid() or not stat.S_ISREG(st.st_mode):
+        raise SystemExit(1)
+finally:
+    os.close(fd)
+PY
+```
+
+The file must be a regular file, not a symlink, owned by the user who will run the MCP process, and mode `0600` or `0400`. No path component may be a symlink. The bytes are the key with no trailing newline. The MCP process reads it once. A later edit does not affect the running process.
+
+Register the extracted runtime, not a git checkout. `command` and `args` are absolute paths on the parent machine. The env map contains the path only:
+
+```json
+{
+  "command": "/usr/bin/node",
+  "args": ["/absolute/path/to/extracted/unifi-site-manager-runtime/index.js"],
+  "env": {
+    "UNIFI_SITE_MANAGER_API_KEY_FILE": "/home/box/unifi-site-manager-api-key"
+  }
+}
+```
+
+`/usr/bin/node` is an example. Use the absolute Node binary on the parent host. Do not pass the key as an argument. Do not add a wrapper that prints the environment.
 
 ## Install
 

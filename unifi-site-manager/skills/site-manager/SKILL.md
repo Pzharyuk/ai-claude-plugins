@@ -72,3 +72,5 @@ Do not implement these from this skill. Tell the user they are documented elsewh
 ## Secrets
 
 Do not paste an API key into chat. Do not copy tool output that still contains a credential into memory, a ticket, or a log. The server redacts known secret fields and any echo of the API key before it returns JSON. Email fields on host `userData` are redacted.
+
+Outbound calls are allowlisted to `https://api.ui.com` and are not followed across redirects. Protect and Access paths are rejected before a request is sent. A console below firmware 5.0.3, or with unknown firmware, is reported and not called.

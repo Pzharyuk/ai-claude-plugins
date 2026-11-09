@@ -11,6 +11,9 @@
  * /v1/sites/{siteId}/vpn/site-to-site-tunnels. Those VPN routes are GET-only.
  */
 
+import fs from "node:fs";
+import path from "node:path";
+
 export const API_BASE = "https://api.ui.com";
 export const MIN_CONSOLE_FIRMWARE = "5.0.3";
 
@@ -99,22 +102,93 @@ export class ApiError extends Error {
   }
 }
 
-export function requireApiKey(env = process.env) {
-  const raw = env?.UNIFI_SITE_MANAGER_API_KEY;
-  if (typeof raw !== "string" || raw.trim() === "") {
+const KEY_FILE_ERROR = "UNIFI_SITE_MANAGER_API_KEY_FILE is not a usable key file.";
+
+function validateKeyMaterial(key) {
+  if (typeof key !== "string" || key.length < 16 || key.length > 512 || /\s/.test(key) || key.includes("\0")) {
     throw new ApiError(
-      "UNIFI_SITE_MANAGER_API_KEY is required. Set it in the plugin secret field. Do not paste it into chat.",
-      { code: "missing_api_key" },
-    );
-  }
-  const key = raw.trim();
-  if (key.length < 16 || key.length > 512 || /\s/.test(key)) {
-    throw new ApiError(
-      "UNIFI_SITE_MANAGER_API_KEY is not a usable secret. Set a new key in the plugin secret field.",
+      "UNIFI_SITE_MANAGER_API_KEY is not a usable secret. Set a new key in the plugin secret field or key file.",
       { code: "invalid_api_key" },
     );
   }
   return key;
+}
+
+function rejectKeyFile() {
+  throw new ApiError(KEY_FILE_ERROR, { code: "invalid_key_file" });
+}
+
+function assertKeyFilePath(filePath) {
+  if (typeof filePath !== "string" || filePath.length === 0 || filePath.length > 4096) rejectKeyFile();
+  if (filePath.includes("\0") || filePath.includes("\\") || !filePath.startsWith("/") || filePath.endsWith("/")) rejectKeyFile();
+  if (filePath.split("/").includes("..") || filePath.split("/").includes(".")) rejectKeyFile();
+  if (path.posix.normalize(filePath) !== filePath) rejectKeyFile();
+  let current = "/";
+  for (const segment of filePath.split("/").filter(Boolean)) {
+    current = path.posix.join(current, segment);
+    let st;
+    try {
+      st = fs.lstatSync(current);
+    } catch {
+      rejectKeyFile();
+    }
+    if (st.isSymbolicLink()) rejectKeyFile();
+  }
+  return filePath;
+}
+
+export function loadApiKeyFromFile(filePath) {
+  try {
+    const safePath = assertKeyFilePath(filePath);
+    const before = fs.lstatSync(safePath);
+    if (!before.isFile() || before.isSymbolicLink()) rejectKeyFile();
+    if (typeof process.getuid !== "function" || before.uid !== process.getuid()) rejectKeyFile();
+    const perms = before.mode & 0o777;
+    if (perms !== 0o600 && perms !== 0o400) rejectKeyFile();
+    if (before.size < 16 || before.size > 512) rejectKeyFile();
+    const fd = fs.openSync(safePath, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+    try {
+      const opened = fs.fstatSync(fd);
+      if (!opened.isFile() || opened.dev !== before.dev || opened.ino !== before.ino) rejectKeyFile();
+      if (opened.uid !== process.getuid()) rejectKeyFile();
+      const openedPerms = opened.mode & 0o777;
+      if (openedPerms !== 0o600 && openedPerms !== 0o400) rejectKeyFile();
+      if (opened.size < 16 || opened.size > 512) rejectKeyFile();
+      const buf = Buffer.alloc(opened.size);
+      const read = fs.readSync(fd, buf, 0, opened.size, 0);
+      if (read !== opened.size) rejectKeyFile();
+      return validateKeyMaterial(buf.toString("utf8"));
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch (err) {
+    if (err instanceof ApiError) throw err;
+    rejectKeyFile();
+  }
+}
+
+export function requireApiKey(env = process.env) {
+  const raw = env?.UNIFI_SITE_MANAGER_API_KEY;
+  const fileRaw = env?.UNIFI_SITE_MANAGER_API_KEY_FILE;
+  const hasKey = typeof raw === "string" && raw.trim() !== "";
+  const hasFile = typeof fileRaw === "string" && fileRaw.trim() !== "";
+  if (hasKey && hasFile) {
+    throw new ApiError(
+      "Set only one of UNIFI_SITE_MANAGER_API_KEY or UNIFI_SITE_MANAGER_API_KEY_FILE.",
+      { code: "credential_source_conflict" },
+    );
+  }
+  if (hasFile) {
+    if (fileRaw !== fileRaw.trim()) rejectKeyFile();
+    return loadApiKeyFromFile(fileRaw);
+  }
+  if (!hasKey) {
+    throw new ApiError(
+      "UNIFI_SITE_MANAGER_API_KEY is required. Set it in the plugin secret field or set UNIFI_SITE_MANAGER_API_KEY_FILE. Do not paste it into chat.",
+      { code: "missing_api_key" },
+    );
+  }
+  return validateKeyMaterial(raw.trim());
 }
 
 export function redact(value, secrets = []) {
@@ -267,9 +341,7 @@ export function createClient({
   sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   limits: limitOverrides = {},
 } = {}) {
-  if (typeof apiKey !== "string" || apiKey.length < 16) {
-    throw new ApiError("A Site Manager API key is required", { code: "missing_api_key" });
-  }
+  validateKeyMaterial(apiKey);
   const limits = { ...LIMITS, ...limitOverrides };
   const limiter = new RateLimiter({
     now,
@@ -316,7 +388,7 @@ export function createClient({
     else if (status === 408) code = "timeout";
     else if (status === 429) code = "rate_limited";
     else if (status === 400) code = "bad_request";
-    const upstream = typeof payload?.message === "string" ? redact(payload.message, [apiKey]) : "";
+    const upstream = typeof payload?.message === "string" ? String(redact(payload.message, [apiKey])).slice(0, 300) : "";
     const message = `UniFi Site Manager HTTP ${status}${upstream ? `: ${upstream}` : ""}`;
     return new ApiError(message, { status, code });
   };
@@ -325,7 +397,7 @@ export function createClient({
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), limits.requestTimeoutMs);
     try {
-      return await fetchImpl(url, { ...init, signal: controller.signal });
+      return await fetchImpl(url, { ...init, redirect: "manual", signal: controller.signal });
     } catch (err) {
       if (err?.name === "AbortError") {
         const timeout = new Error("UniFi Site Manager request timed out");
@@ -339,11 +411,57 @@ export function createClient({
     }
   };
 
-  const request = async (method, path, { query, body, consoleId } = {}) => {
+  const allowRoute = (method, pathname) => {
+    const uuid = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+    const id = "[A-Za-z0-9:._-]{1,200}";
+    const rules = [
+      { method: "GET", path: /^\/v1\/hosts$/, query: ["pageSize", "nextToken"] },
+      { method: "GET", path: new RegExp(`^\\/v1\\/hosts\\/${id}$`), query: [] },
+      { method: "GET", path: /^\/v1\/sites$/, query: ["pageSize", "nextToken"] },
+      { method: "GET", path: /^\/v1\/devices$/, query: ["pageSize", "nextToken", "hostIds[]", "time"] },
+      { method: "GET", path: /^\/v1\/isp-metrics\/(?:5m|1h)$/, query: ["beginTimestamp", "endTimestamp", "duration"] },
+      { method: "POST", path: /^\/v1\/isp-metrics\/(?:5m|1h)\/query$/, query: [] },
+      { method: "GET", path: /^\/v1\/sd-wan-configs$/, query: [] },
+      { method: "GET", path: new RegExp(`^\\/v1\\/sd-wan-configs\\/${id}$`), query: [] },
+      { method: "GET", path: new RegExp(`^\\/v1\\/sd-wan-configs\\/${id}\\/status$`), query: [] },
+      { method: "GET", path: new RegExp(`^\\/v1\\/connector\\/consoles\\/${id}\\/network\\/integration\\/v1\\/sites$`), query: ["offset", "limit"] },
+      { method: "GET", path: new RegExp(`^\\/v1\\/connector\\/consoles\\/${id}\\/network\\/integration\\/v1\\/sites\\/${uuid}\\/vpn\\/servers$`), query: ["offset", "limit"] },
+      { method: "GET", path: new RegExp(`^\\/v1\\/connector\\/consoles\\/${id}\\/network\\/integration\\/v1\\/sites\\/${uuid}\\/vpn\\/site-to-site-tunnels$`), query: ["offset", "limit"] },
+    ];
+    return rules.find((rule) => rule.method === method && rule.path.test(pathname)) || null;
+  };
+
+  const assertOfficialRequest = (method, url) => {
     if (method !== "GET" && method !== "POST") {
       throw new ApiError("Only documented read requests are allowed", { code: "invalid_input" });
     }
-    const url = new URL(path, API_BASE);
+    if (
+      url.protocol !== "https:"
+      || url.hostname !== "api.ui.com"
+      || (url.port !== "" && url.port !== "443")
+      || url.username
+      || url.password
+      || url.pathname.includes("%")
+      || url.pathname.includes("\\")
+      || url.pathname.includes("..")
+    ) {
+      throw new ApiError("Requests are limited to the official Site Manager host", { code: "invalid_input" });
+    }
+    const rule = allowRoute(method, url.pathname);
+    if (!rule) throw new ApiError("Request path is not allowed", { code: "invalid_input" });
+    for (const key of url.searchParams.keys()) {
+      if (!rule.query.includes(key)) throw new ApiError("Query parameter is not allowed", { code: "invalid_input" });
+    }
+    return rule;
+  };
+
+  const request = async (method, requestPath, { query, body, consoleId } = {}) => {
+    let url;
+    try {
+      url = new URL(requestPath, API_BASE);
+    } catch {
+      throw new ApiError("Requests are limited to the official Site Manager host", { code: "invalid_input" });
+    }
     for (const [key, value] of Object.entries(query || {})) {
       if (value == null) continue;
       if (Array.isArray(value)) {
@@ -352,11 +470,12 @@ export function createClient({
         url.searchParams.set(key, String(value));
       }
     }
-    if (url.origin !== API_BASE) {
-      throw new ApiError("Requests are limited to the official Site Manager host", { code: "invalid_input" });
+    const rule = assertOfficialRequest(method, url);
+    if (body !== undefined && rule.method !== "POST") {
+      throw new ApiError("Request path is not allowed", { code: "invalid_input" });
     }
     const headers = { Accept: "application/json", "X-API-KEY": apiKey };
-    const init = { method, headers };
+    const init = { method, headers, redirect: "manual" };
     if (body !== undefined) {
       headers["Content-Type"] = "application/json";
       init.body = JSON.stringify(body);
@@ -366,6 +485,21 @@ export function createClient({
       try {
         await limiter.wait(consoleId);
         const response = await fetchWithTimeout(url.toString(), init);
+        if (response.url) {
+          let finalUrl;
+          try {
+            finalUrl = new URL(response.url);
+          } catch {
+            throw new ApiError("UniFi Site Manager redirect was blocked", { code: "redirect_blocked" });
+          }
+          if (finalUrl.protocol !== "https:" || finalUrl.hostname !== "api.ui.com" || finalUrl.username || finalUrl.password) {
+            throw new ApiError("UniFi Site Manager redirect was blocked", { code: "redirect_blocked" });
+          }
+        }
+        if (response.status >= 300 && response.status < 400) {
+          await readBody(response);
+          throw new ApiError("UniFi Site Manager redirect was blocked", { status: response.status, code: "redirect_blocked" });
+        }
         const payload = await readBody(response);
         if (response.ok) return redact(payload ?? {}, [apiKey]);
         const error = httpError(response.status, payload);
@@ -374,11 +508,15 @@ export function createClient({
         await sleep(retryDelay(response, payload, attempt));
       } catch (err) {
         if (err instanceof ApiError || err?.code === "response_too_large") throw err;
-        if (!(isTimeout(err) || err instanceof TypeError)) {
-          throw new ApiError("UniFi Site Manager request failed", { code: "request_failed" });
+        if (isTimeout(err)) {
+          if (attempt === limits.maxAttempts) {
+            throw new ApiError("UniFi Site Manager request timed out", { code: "timeout" });
+          }
+          await sleep(Math.min(limits.maxRetryWaitMs, 500 * 2 ** (attempt - 1)));
+          continue;
         }
-        if (attempt === limits.maxAttempts) {
-          throw new ApiError("UniFi Site Manager request timed out", { code: "timeout" });
+        if (attempt === limits.maxAttempts || !(err instanceof TypeError)) {
+          throw new ApiError("UniFi Site Manager request failed", { code: "request_failed" });
         }
         await sleep(Math.min(limits.maxRetryWaitMs, 500 * 2 ** (attempt - 1)));
       }
@@ -404,17 +542,27 @@ export function createClient({
     return Math.min(size, limits.networkMaxLimit);
   };
 
-  const listCollection = async (path, { query = {}, pageSize, maxPages } = {}) => {
+  const clampMaxPages = (value, max) => {
+    if (value == null) return max;
+    const pages = Number(value);
+    if (!Number.isInteger(pages) || pages < 1) {
+      throw new ApiError("maxPages must be a positive integer", { code: "invalid_input" });
+    }
+    return Math.min(pages, max);
+  };
+
+  const listCollection = async (collectionPath, { query = {}, pageSize, maxPages, nextToken } = {}) => {
     const size = clampPageSize(pageSize);
-    const cap = maxPages ?? limits.siteManagerMaxPages;
+    const cap = clampMaxPages(maxPages, limits.siteManagerMaxPages);
+    if (nextToken != null) assertSafeId(nextToken, "nextToken");
     const items = [];
     const seen = new Set();
-    let token;
+    let token = nextToken || undefined;
     let pages = 0;
     while (pages < cap) {
       const nextQuery = { ...query, pageSize: String(size) };
       if (token) nextQuery.nextToken = token;
-      const payload = await request("GET", path, { query: nextQuery });
+      const payload = await request("GET", collectionPath, { query: nextQuery });
       pages += 1;
       const data = Array.isArray(payload?.data) ? payload.data : [];
       items.push(...data);
@@ -448,7 +596,7 @@ export function createClient({
     const safeHost = assertSafeId(hostId, "host id");
     const safeSuffix = connectorSuffix(suffix);
     const size = clampLimit(limit);
-    const cap = maxPages ?? limits.networkMaxPages;
+    const cap = clampMaxPages(maxPages, limits.networkMaxPages);
     const items = [];
     let offset = 0;
     let pages = 0;
@@ -475,7 +623,13 @@ export function createClient({
     return { items, pages, truncated, totalCount, offset };
   };
 
-  return { request, listCollection, listNetwork, limits };
+  return {
+    request,
+    listCollection,
+    listNetwork,
+    limits,
+    redactMessage: (text) => String(redact(String(text), [apiKey])),
+  };
 }
 
 export function createClientFromEnv(env = process.env, deps = {}) {
@@ -614,6 +768,22 @@ export function createApi(siteClient) {
     if (hostId) {
       assertSafeId(hostId, "host id");
       hosts = hosts.filter((host) => host.id === hostId);
+      if (hosts.length === 0) {
+        return {
+          hosts: [{
+            hostId,
+            ok: false,
+            error: {
+              code: hostPage.truncated ? "not_in_paged_results" : "not_found",
+              status: null,
+              message: hostPage.truncated
+                ? "Host was not present in the bounded host page set"
+                : "Host was not returned by Site Manager",
+            },
+          }],
+          truncated: Boolean(hostPage.truncated),
+        };
+      }
     }
     const results = [];
     for (const host of hosts) {
@@ -710,6 +880,7 @@ const pageArgs = {
   properties: {
     pageSize: { type: "integer", minimum: 1, maximum: LIMITS.siteManagerMaxPageSize },
     maxPages: { type: "integer", minimum: 1, maximum: LIMITS.siteManagerMaxPages },
+    nextToken: { type: "string" },
   },
 };
 

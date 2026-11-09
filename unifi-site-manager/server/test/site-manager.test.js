@@ -1,8 +1,9 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync, mkdtempSync, writeFileSync, chmodSync, symlinkSync, mkdirSync, rmSync, lstatSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { tmpdir } from "node:os";
 
 const serverDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pluginDir = path.resolve(serverDir, "..");
@@ -15,6 +16,8 @@ const {
   MIN_CONSOLE_FIRMWARE,
   API_BASE,
   requireApiKey,
+  loadApiKeyFromFile,
+  createClientFromEnv,
   redact,
   firmwareStatus,
   firmwareVersionForHost,
@@ -576,6 +579,251 @@ describe("repository secret safety", () => {
     const network = readFileSync(path.join(repoRoot, "unifi-network/.claude-plugin/plugin.json"), "utf8");
     assert.match(network, /"name": "unifi-network"/);
     assert.match(network, /UNIFI_PASSWORD/);
+  });
+});
+
+describe("redirects, allowlist, and page bounds", () => {
+  it("blocks redirects and does not request the Location host", async () => {
+    const calls = [];
+    const api = createApi(client(async (url, init) => {
+      calls.push({ url, redirect: init.redirect });
+      return new Response("go", { status: 302, headers: { Location: "https://evil.example/steal", "x-api-key": SECRET } });
+    }));
+    await assert.rejects(() => api.listSdWanConfigs(), (err) => {
+      assert.equal(err.code, "redirect_blocked");
+      assert.equal(err.message.includes("evil.example"), false);
+      assert.equal(err.message.includes(SECRET), false);
+      assert.equal(err.message.includes("Location"), false);
+      return true;
+    });
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].redirect, "manual");
+    assert.equal(String(calls[0].url).startsWith("https://api.ui.com/"), true);
+  });
+
+  it("rejects an off-host final URL even when the status is 200", async () => {
+    const api = createApi(client(async () => ({
+      status: 200,
+      ok: true,
+      url: "https://evil.example/v1/sd-wan-configs",
+      headers: new Headers(),
+      arrayBuffer: async () => new TextEncoder().encode("{}"),
+    })));
+    await assert.rejects(() => api.listSdWanConfigs(), (err) => {
+      assert.equal(err.code, "redirect_blocked");
+      assert.equal(err.message.includes("evil.example"), false);
+      return true;
+    });
+  });
+
+  it("rejects off-host, protect, mutating, and unknown query requests before fetch", async () => {
+    let calls = 0;
+    const raw = client(async () => {
+      calls += 1;
+      return jsonResponse(200, { data: [] });
+    });
+    await assert.rejects(() => raw.request("GET", "https://evil.example/v1/hosts"), (err) => err.code === "invalid_input");
+    await assert.rejects(() => raw.request("GET", "//evil.example/v1/hosts"), (err) => err.code === "invalid_input");
+    await assert.rejects(() => raw.request("GET", "/v1/connector/consoles/HOST/protect/integration/v1/cameras"), (err) => err.code === "invalid_input");
+    await assert.rejects(() => raw.request("POST", "/v1/hosts"), (err) => err.code === "invalid_input");
+    await assert.rejects(() => raw.request("DELETE", "/v1/hosts/HOSTOK:1"), (err) => err.code === "invalid_input");
+    await assert.rejects(() => raw.request("GET", "/v1/hosts", { query: { next: "https://evil.example" } }), (err) => err.code === "invalid_input");
+    assert.equal(calls, 0);
+  });
+
+  it("clamps maxPages to the client bound", async () => {
+    let calls = 0;
+    const api = createApi(client(async () => {
+      calls += 1;
+      return jsonResponse(200, { data: [{ id: calls }], nextToken: `tok-${calls}` });
+    }));
+    const result = await api.listHosts({ maxPages: 1000 });
+    assert.equal(calls, LIMITS.siteManagerMaxPages);
+    assert.equal(result.truncated, true);
+    assert.equal(result.truncationReason, "max_pages");
+  });
+
+  it("starts a later page from a safe nextToken", async () => {
+    let token;
+    const api = createApi(client(async (url) => {
+      token = new URL(url).searchParams.get("nextToken");
+      return jsonResponse(200, { data: [{ id: "h2" }] });
+    }));
+    const result = await api.listHosts({ nextToken: "page-2" });
+    assert.equal(token, "page-2");
+    assert.equal(result.items[0].id, "h2");
+    let calls = 0;
+    const blocked = createApi(client(async () => {
+      calls += 1;
+      return jsonResponse(200, { data: [] });
+    }));
+    await assert.rejects(() => blocked.listHosts({ nextToken: "../token" }), (err) => err.code === "invalid_input");
+    assert.equal(calls, 0);
+  });
+
+  it("reports a host that is absent instead of an empty VPN success", async () => {
+    const calls = [];
+    const api = createApi(client(async (url) => {
+      const pathname = new URL(url).pathname;
+      calls.push(pathname);
+      if (pathname === "/v1/hosts") return jsonResponse(200, { data: [{ id: "OTHER:1", owner: true }] });
+      if (pathname === "/v1/devices") return jsonResponse(200, { data: [] });
+      return jsonResponse(500, { message: "connector should not be called" });
+    }));
+    const result = await api.listVpnStatus({ hostId: "HOSTOK:2" });
+    assert.equal(result.hosts[0].ok, false);
+    assert.equal(result.hosts[0].error.code, "not_found");
+    assert.equal(calls.some((pathname) => pathname.includes("connector")), false);
+  });
+});
+
+describe("api key file", () => {
+  const marker = "unifi-sm-keyfile-test-marker";
+  let dir;
+
+  before(() => {
+    dir = mkdtempSync(path.join(tmpdir(), `${marker}-`));
+  });
+
+  after(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function writeKey(name, contents, mode = 0o600) {
+    const file = path.join(dir, name);
+    writeFileSync(file, contents);
+    chmodSync(file, mode);
+    return file;
+  }
+
+  function assertHidden(err) {
+    assert.equal(err.message.includes(SECRET), false);
+    assert.equal(err.message.includes(marker), false);
+    assert.equal(err.message.includes(dir), false);
+  }
+
+  it("rejects a relative path, a symlink, a loose mode, and a missing file without leaking the path", () => {
+    assert.throws(() => loadApiKeyFromFile(`${marker}/key`), (err) => {
+      assert.equal(err.code, "invalid_key_file");
+      assertHidden(err);
+      return true;
+    });
+    const real = writeKey("real-key", SECRET, 0o600);
+    const link = path.join(dir, "key-link");
+    symlinkSync(real, link);
+    assert.throws(() => loadApiKeyFromFile(link), (err) => {
+      assert.equal(err.code, "invalid_key_file");
+      assertHidden(err);
+      return true;
+    });
+    const loose = writeKey("loose-key", SECRET, 0o644);
+    assert.throws(() => loadApiKeyFromFile(loose), (err) => {
+      assert.equal(err.code, "invalid_key_file");
+      assertHidden(err);
+      return true;
+    });
+    const execBit = writeKey("exec-key", SECRET, 0o700);
+    assert.throws(() => loadApiKeyFromFile(execBit), (err) => err.code === "invalid_key_file");
+    assert.throws(() => loadApiKeyFromFile(path.join(dir, "missing-key")), (err) => {
+      assert.equal(err.code, "invalid_key_file");
+      assertHidden(err);
+      return true;
+    });
+    assert.throws(() => loadApiKeyFromFile(dir), (err) => err.code === "invalid_key_file");
+  });
+
+  it("rejects a symlink in a parent directory", () => {
+    const realDir = path.join(dir, "real-dir");
+    mkdirSync(realDir);
+    const file = path.join(realDir, "key");
+    writeFileSync(file, SECRET);
+    chmodSync(file, 0o600);
+    const linkedDir = path.join(dir, "linked-dir");
+    symlinkSync(realDir, linkedDir);
+    assert.throws(() => loadApiKeyFromFile(path.join(linkedDir, "key")), (err) => {
+      assert.equal(err.code, "invalid_key_file");
+      assert.equal(err.message.includes("linked-dir"), false);
+      assert.equal(lstatSync(linkedDir).isSymbolicLink(), true);
+      return true;
+    });
+  });
+
+  it("reads an owner-only 0600 or 0400 file once and keeps that key in memory", async () => {
+    const file = writeKey("memory-key", SECRET, 0o600);
+    const time = clock();
+    let header;
+    const api = createApi(createClientFromEnv(
+      { UNIFI_SITE_MANAGER_API_KEY_FILE: file },
+      {
+        fetchImpl: async (_url, init) => {
+          header = init.headers["X-API-KEY"];
+          return jsonResponse(200, { data: [{ id: "cfg" }] });
+        },
+        now: time.now,
+        sleep: time.sleep,
+        limits: { ...LIMITS, minRequestIntervalMs: 0 },
+      },
+    ));
+    await api.listSdWanConfigs();
+    assert.equal(header, SECRET);
+    writeFileSync(file, "replacement-key-value-not-used");
+    chmodSync(file, 0o600);
+    await api.listSdWanConfigs();
+    assert.equal(header, SECRET);
+    const readonly = writeKey("readonly-key", SECRET, 0o400);
+    assert.equal(requireApiKey({ UNIFI_SITE_MANAGER_API_KEY_FILE: readonly }), SECRET);
+  });
+
+  it("rejects empty, newline, and oversized file contents without echoing them", () => {
+    const empty = writeKey("empty-key", "", 0o600);
+    assert.throws(() => loadApiKeyFromFile(empty), (err) => {
+      assert.equal(err.code, "invalid_key_file");
+      assertHidden(err);
+      return true;
+    });
+    const newline = writeKey("newline-key", `${SECRET}\n`, 0o600);
+    assert.throws(() => loadApiKeyFromFile(newline), (err) => {
+      assert.equal(err.code, "invalid_api_key");
+      assertHidden(err);
+      return true;
+    });
+    const huge = writeKey("huge-key", "a".repeat(513), 0o600);
+    assert.throws(() => loadApiKeyFromFile(huge), (err) => {
+      assert.equal(err.code, "invalid_key_file");
+      assert.equal(err.message.includes("a".repeat(20)), false);
+      return true;
+    });
+  });
+
+  it("refuses to use both the env key and the key file", () => {
+    const file = writeKey("both-key", SECRET, 0o600);
+    assert.throws(() => requireApiKey({
+      UNIFI_SITE_MANAGER_API_KEY: SECRET,
+      UNIFI_SITE_MANAGER_API_KEY_FILE: file,
+    }), (err) => {
+      assert.equal(err.code, "credential_source_conflict");
+      assertHidden(err);
+      assert.equal(err.message.includes("both-key"), false);
+      return true;
+    });
+    assert.throws(() => requireApiKey({
+      UNIFI_SITE_MANAGER_API_KEY: SECRET,
+      UNIFI_SITE_MANAGER_API_KEY_FILE: `/${marker}/does-not-exist`,
+    }), (err) => {
+      assert.equal(err.code, "credential_source_conflict");
+      assertHidden(err);
+      return true;
+    });
+  });
+
+  it("rejects a header-breaking env key without echoing it", () => {
+    const injected = `abcdefghijklmnopqrstuvwxyz\r\nX-Injected: yes`;
+    assert.throws(() => requireApiKey({ UNIFI_SITE_MANAGER_API_KEY: injected }), (err) => {
+      assert.equal(err.code, "invalid_api_key");
+      assert.equal(err.message.includes("X-Injected"), false);
+      assert.equal(err.message.includes("abcdefghijklmnopqrstuvwxyz"), false);
+      return true;
+    });
   });
 });
 
