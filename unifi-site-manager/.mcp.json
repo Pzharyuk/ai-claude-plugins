@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "unifi-site-manager": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/index.js"],
+      "env": {
+        "UNIFI_SITE_MANAGER_API_KEY": "${UNIFI_SITE_MANAGER_API_KEY}"
+      }
+    }
+  }
+}

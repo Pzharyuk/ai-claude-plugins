@@ -1,0 +1,25 @@
+{
+  "name": "unifi-site-manager",
+  "version": "0.1.0",
+  "description": "Read-only UniFi Site Manager cloud access for every location: hosts, sites, devices, health, WAN metrics, SD-WAN status, and Network site-to-site VPN status. Uses an api.ui.com API key. Does not log in to a local controller and does not change the network.",
+  "author": {
+    "name": "Pzharyuk"
+  },
+  "keywords": [
+    "unifi",
+    "site-manager",
+    "ubiquiti",
+    "sd-wan",
+    "vpn",
+    "read-only"
+  ],
+  "setup": {
+    "env": {
+      "UNIFI_SITE_MANAGER_API_KEY": {
+        "description": "Site Manager API key from unifi.ui.com. Sent only as the X-API-KEY header to https://api.ui.com. This is not the local UniFi Network username, password, or controller integration key.",
+        "required": true,
+        "secret": true
+      }
+    }
+  }
+}
